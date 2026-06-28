@@ -135,6 +135,7 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   /* Logo-Wasserzeichen: fixiert, zentriert, erst nach Scroll sichtbar */
   #pe-logo-bg {
     position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0; /* Safari <14.1 fallback */
     inset: 0;
     z-index: 0;
     display: flex;
@@ -169,11 +170,13 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   /* ── Hero: sticky, exakt eine volle Bildschirmseite ── */
   #pe-hero-wrapper {
     height: 100vh;
+    height: 100dvh; /* iOS Safari: dynamic viewport height (ohne Adressleiste) */
   }
   .wp-block-kubio-header {
     position: sticky !important;
     top: 0 !important;
     height: 100vh !important;
+    height: 100dvh !important; /* iOS Safari fix */
     overflow: hidden !important;
     min-height: unset !important;
   }
@@ -196,7 +199,7 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   /* Scroll-Pfeil */
   #pe-scroll-arrow {
     position: fixed;
-    bottom: 32px;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
@@ -481,7 +484,9 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		  wrapper.id = 'pe-hero-wrapper';
 		  header.parentNode.insertBefore(wrapper, header);
 		  wrapper.appendChild(header);
-		  var vh = window.innerHeight;
+		  // dvh-fähige Viewport-Höhe (iOS Safari-kompatibel)
+		  var dvhSupported = CSS && CSS.supports && CSS.supports('height', '1dvh');
+		  var vh = dvhSupported ? (window.visualViewport ? window.visualViewport.height : window.innerHeight) : window.innerHeight;
 
 		  // 2. Navbar-Höhe ermitteln und Hero-Padding entsprechend setzen
 		  var navH = nav ? nav.getBoundingClientRect().height : 80;
