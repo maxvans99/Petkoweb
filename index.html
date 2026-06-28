@@ -469,6 +469,9 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		      el.style.setProperty('stroke', c, 'important');
 		      el.style.setProperty('color', c, 'important');
 		    });
+		    // Glow-Effekt: leuchtendes Drop-Shadow in der Icon-Farbe
+		    var svg = ic.querySelector('.h-svg-icon svg');
+		    if(svg) svg.style.setProperty('filter', 'drop-shadow(0 0 6px ' + c + 'cc) drop-shadow(0 0 14px ' + c + '66)', 'important');
 		  });
 		})();
 		</script>
