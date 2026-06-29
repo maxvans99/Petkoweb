@@ -151,6 +151,8 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
     max-width: 70%;
     opacity: 0.13;
     mix-blend-mode: multiply;
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 20%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 70% at center, black 20%, transparent 100%);
   }
   /* Icons in den schwarzen Karten — individuell eingefärbt */
   /* Hilfsmixin: alle Icons base-reset */
@@ -162,6 +164,10 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   /* Glow immer aktiv — Farbe folgt currentColor (wird per JS gesetzt) */
   .wp-block-kubio-icon .h-svg-icon svg {
     filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 16px currentColor) !important;
+  }
+  /* Hero-Logo: weißen JPG-Rand einschmelzen — muss auf Row-Ebene (transform = neue Stacking-Context) */
+  .wp-block-kubio-hero .wp-block-kubio-row {
+    mix-blend-mode: multiply !important;
   }
   /* Farben per JS gesetzt (siehe Script unten) */
   /* Hero-Bereich transparent, damit Hintergrund + Wasserzeichen durchscheinen */
