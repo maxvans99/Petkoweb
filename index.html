@@ -165,11 +165,26 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   .wp-block-kubio-icon .h-svg-icon svg {
     filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 16px currentColor) !important;
   }
-  /* Hero-Logo: weißen JPG-Rand einschmelzen — muss auf Row-Ebene (transform = neue Stacking-Context) */
-  .wp-block-kubio-hero .wp-block-kubio-row {
-    mix-blend-mode: multiply !important;
-  }
   /* Farben per JS gesetzt (siehe Script unten) */
+  /* Navigationsleiste immer oben fixieren */
+  .wp-block-kubio-navigation-top-bar,
+  .wp-block-kubio-navigation-section {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+  }
+  .wp-block-kubio-navigation-top-bar {
+    top: 0 !important;
+  }
+  .wp-block-kubio-navigation-section {
+    top: 41px !important; /* direkt unter der Topbar */
+  }
+  @media (max-width: 900px) {
+    .wp-block-kubio-navigation-section {
+      top: 0 !important; /* Topbar auf Mobile versteckt */
+    }
+  }
   /* Hero-Bereich transparent, damit Hintergrund + Wasserzeichen durchscheinen */
   .wp-block-kubio-hero { background-color: transparent !important; }
   .wp-block-kubio-hero .overlay-image-layer { background: transparent !important; }
@@ -177,6 +192,17 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   /* Hero-Abstände reduzieren damit Logo + Text komplett in den Viewport passen */
   .wp-block-kubio-hero { padding-top: 10px !important; padding-bottom: 10px !important; }
 
+  /* ── Responsive: Spalten auf Mobile untereinander statt nebeneinander ── */
+  @media (max-width: 900px) {
+    .wp-block-kubio-hero .wp-block-kubio-row__inner {
+      flex-wrap: wrap !important;
+    }
+    .wp-block-kubio-hero .wp-block-kubio-column {
+      width: 100% !important;
+      max-width: 100% !important;
+      flex: 0 0 100% !important;
+    }
+  }
   /* ── Hero: sticky, exakt eine volle Bildschirmseite ── */
   #pe-hero-wrapper {
     height: 100vh;
@@ -189,6 +215,10 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
     height: 100dvh !important; /* iOS Safari fix */
     overflow: hidden !important;
     min-height: unset !important;
+  }
+  /* Abstand vor erstem Content-Block — sanfterer Übergang nach dem Hero */
+  .entry-content {
+    padding-top: 80px !important;
   }
   /* Vorhang: verdeckt Content-Bleed am unteren Rand beim ersten Load */
   #pe-bottom-cover {
@@ -488,37 +518,56 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		  var heroInner = document.querySelector('.wp-block-kubio-hero__inner');
 		  var heroRow  = document.querySelector('.wp-block-kubio-hero .wp-block-kubio-row');
 		  var nav      = document.querySelector('.wp-block-kubio-navigation-section, [class*="navigation-section"]');
+		  var topbarEl = document.querySelector('[class*="navigation-top-bar"]');
+
+		  // Nav aus dem Header herauslösen → direkt in body (kein begrenzter Stacking-Context)
+		  if(topbarEl) document.body.insertBefore(topbarEl, document.body.firstChild);
+		  if(nav)      document.body.insertBefore(nav,      document.body.firstChild);
 
 		  // Wrapper um Header legen (CSS gibt Höhe + sticky)
 		  var wrapper = document.createElement('div');
 		  wrapper.id = 'pe-hero-wrapper';
 		  header.parentNode.insertBefore(wrapper, header);
 		  wrapper.appendChild(header);
-		  // dvh-fähige Viewport-Höhe (iOS Safari-kompatibel)
-		  var dvhSupported = CSS && CSS.supports && CSS.supports('height', '1dvh');
-		  var vh = dvhSupported ? (window.visualViewport ? window.visualViewport.height : window.innerHeight) : window.innerHeight;
 
-		  // 2. Navbar-Höhe ermitteln und Hero-Padding entsprechend setzen
-		  var navH = nav ? nav.getBoundingClientRect().height : 80;
-		  var topbarEl = document.querySelector('[class*="navigation-top-bar"]');
-		  var topbarH = topbarEl ? topbarEl.getBoundingClientRect().height : 40;
-		  var totalNavH = navH + topbarH;
+		  function fitHero() {
+		    // Viewport-Höhe (iOS Safari: visualViewport berücksichtigt Adressleiste)
+		    var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+		    var navH    = nav      ? nav.getBoundingClientRect().height      : 80;
+		    var topbarH = topbarEl ? topbarEl.getBoundingClientRect().height  : 0;
+		    var totalNavH = navH + topbarH;
 
-		  if(heroInner) heroInner.style.setProperty('padding-top', totalNavH + 'px', 'important');
-		  if(heroRow)   {
-		    heroRow.style.setProperty('padding-top', '0px', 'important');
-		    heroRow.style.setProperty('padding-bottom', '0px', 'important');
-		    // Verfügbarer Platz = Viewport - Nav - Hero-Paddings
-		    var available = window.innerHeight - totalNavH - 20;
-		    var rowH = heroRow.scrollHeight;
-		    if(rowH > available) {
-		      var scale = available / rowH;
-		      heroRow.style.setProperty('transform', 'scale(' + scale + ')', 'important');
-		      heroRow.style.setProperty('transform-origin', 'top center', 'important');
-		      // Platz freigeben den transform nicht abnimmt
-		      heroRow.style.setProperty('margin-bottom', '-' + Math.round(rowH * (1 - scale)) + 'px', 'important');
+		    // Padding über dem Inhalt = Nav-Höhe, damit Nav nicht überlappt
+		    if(heroInner) heroInner.style.setProperty('padding-top', totalNavH + 'px', 'important');
+
+		    if(heroRow) {
+		      // Transform zurücksetzen für saubere Höhenmessung
+		      heroRow.style.removeProperty('transform');
+		      heroRow.style.removeProperty('margin-bottom');
+		      heroRow.style.setProperty('padding-top',    '0px', 'important');
+		      heroRow.style.setProperty('padding-bottom', '0px', 'important');
+
+		      // Verfügbarer Platz (Hero-Outer-Padding 10+10=20 abziehen)
+		      var available = vh - totalNavH - 20;
+		      var rowH = heroRow.scrollHeight;
+
+		      if(rowH > available && available > 0) {
+		        var scale = Math.max(0.5, available / rowH); // min 50% damit es nicht zu klein wird
+		        heroRow.style.setProperty('transform',        'scale(' + scale + ')', 'important');
+		        heroRow.style.setProperty('transform-origin', 'top center',           'important');
+		        // Negativen Margin ausgleichen den scale hinterlässt
+		        heroRow.style.setProperty('margin-bottom', '-' + Math.round(rowH * (1 - scale)) + 'px', 'important');
+		      }
 		    }
 		  }
+
+		  // Sofort ausführen (Layout ohne Bilder)
+		  fitHero();
+		  // Nochmal nach Bildladen (korrekte Höhen)
+		  window.addEventListener('load', fitHero);
+		  // Bei Größenänderung (Browser-Resize, Tastatur auf Mobile)
+		  window.addEventListener('resize', fitHero, {passive: true});
+		  if(window.visualViewport) window.visualViewport.addEventListener('resize', fitHero, {passive: true});
 		})();
 		(function(){
 		  var logoBg = document.getElementById('pe-logo-bg');
