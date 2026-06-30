@@ -215,6 +215,10 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
     height: 100dvh !important; /* iOS Safari fix */
     overflow: hidden !important;
     min-height: unset !important;
+    /* mix-blend-mode HIER (auf dem Stacking-Context-Root selbst, nicht auf Kindern!) gesetzt:
+       so blendet der Header als Ganzes gegen seinen ECHTEN Hintergrund (#pe-hero-wrapper/html),
+       statt dass ein Kind-Element gegen eine neue, isolierte Stacking-Context blendet. */
+    mix-blend-mode: multiply !important;
   }
   /* Abstand vor erstem Content-Block — sanfterer Übergang nach dem Hero */
   .entry-content {
@@ -578,8 +582,8 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		    var heroBottom = header ? header.getBoundingClientRect().bottom : 0;
 		    var pastHero = heroBottom <= 0;
 		    var scrolled = window.scrollY > 30;
-		    // Wasserzeichen: erscheint sobald Vorhang weg ist (nach 30px scroll)
-		    logoBg.style.opacity = scrolled ? '1' : '0';
+		    // Wasserzeichen: erst wenn Hero komplett aus dem Viewport gescrollt ist (kein Überlapp)
+		    logoBg.style.opacity = pastHero ? '1' : '0';
 		    // Scroll-Pfeil: nur im Hero sichtbar
 		    if(arrow) arrow.classList.toggle('hidden', pastHero || scrolled);
 		    // Vorhang: versteckt Content-Bleed, verschwindet beim Scrollen
