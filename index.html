@@ -176,9 +176,18 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
   }
   .wp-block-kubio-navigation-top-bar {
     top: 0 !important;
+    /* max-height/padding statt opacity/transform: Kubios eigenes Reveal-Skript
+       resettet opacity+transform pro Frame, ignoriert aber Höhen-Properties */
+    transition: max-height 0.35s ease, padding 0.35s ease;
   }
   .wp-block-kubio-navigation-section {
-    top: 41px !important; /* direkt unter der Topbar */
+    top: 41px !important; /* direkt unter der Topbar — Startwert, wird per JS aktualisiert */
+    transition: top 0.35s ease, box-shadow 0.35s ease;
+  }
+  /* Sanfte Übergänge für Kubios eigene Sticky-Klasse (h-navigation_sticky),
+     die Padding/Hintergrund übernimmt — siehe onScroll-JS */
+  .wp-block-kubio-navigation-section__nav {
+    transition: padding 0.35s ease, background-color 0.35s ease;
   }
   @media (max-width: 900px) {
     .wp-block-kubio-navigation-section {
@@ -523,10 +532,13 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		  var heroRow  = document.querySelector('.wp-block-kubio-hero .wp-block-kubio-row');
 		  var nav      = document.querySelector('.wp-block-kubio-navigation-section, [class*="navigation-section"]');
 		  var topbarEl = document.querySelector('[class*="navigation-top-bar"]');
+		  // Gemeinsamer Vorfahre von Topbar + Nav — enthält Kubios eigene Sticky/Shrink-CSS-Klasse
+		  var navOuter = document.querySelector('.wp-block-kubio-navigation__outer');
 
-		  // Nav aus dem Header herauslösen → direkt in body (kein begrenzter Stacking-Context)
-		  if(topbarEl) document.body.insertBefore(topbarEl, document.body.firstChild);
-		  if(nav)      document.body.insertBefore(nav,      document.body.firstChild);
+		  // Kompletten Nav-Wrapper (samt CSS-Vorfahre) aus dem Header herauslösen → direkt in body
+		  // (kein begrenzter Stacking-Context, und die Kubio-Sticky-Styles bleiben über den
+		  //  Ancestor-Selektor "#kubio .style-HmdWgMTvMF-outer ..." erhalten)
+		  if(navOuter) document.body.insertBefore(navOuter, document.body.firstChild);
 
 		  // Wrapper um Header legen (CSS gibt Höhe + sticky)
 		  var wrapper = document.createElement('div');
@@ -574,10 +586,11 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		  if(window.visualViewport) window.visualViewport.addEventListener('resize', fitHero, {passive: true});
 		})();
 		(function(){
-		  var logoBg = document.getElementById('pe-logo-bg');
-		  var arrow = document.getElementById('pe-scroll-arrow');
-		  var cover = document.getElementById('pe-bottom-cover');
-		  var header = document.querySelector('.wp-block-kubio-header');
+		  var logoBg  = document.getElementById('pe-logo-bg');
+		  var arrow   = document.getElementById('pe-scroll-arrow');
+		  var cover   = document.getElementById('pe-bottom-cover');
+		  var header  = document.querySelector('.wp-block-kubio-header');
+		  var topbar  = document.querySelector('[class*="navigation-top-bar"]');
 		  function onScroll(){
 		    var heroBottom = header ? header.getBoundingClientRect().bottom : 0;
 		    var pastHero = heroBottom <= 0;
@@ -588,6 +601,26 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		    if(arrow) arrow.classList.toggle('hidden', pastHero || scrolled);
 		    // Vorhang: versteckt Content-Bleed, verschwindet beim Scrollen
 		    if(cover) cover.classList.toggle('hidden', scrolled);
+		    // Topbar (Adresse/Telefon) ausblenden. Hinweis: opacity/transform werden von Kubios
+		    // eigenem Reveal-Animations-Skript pro Frame zurückgesetzt und lassen sich nicht
+		    // per Inline-!important halten — daher Höhe/Padding auf 0 kollabieren statt fade/slide.
+		    if(topbar) {
+		      if(scrolled) {
+		        topbar.style.setProperty('max-height',    '0px',  'important');
+		        topbar.style.setProperty('padding-top',    '0px',  'important');
+		        topbar.style.setProperty('padding-bottom', '0px',  'important');
+		        topbar.style.setProperty('pointer-events', 'none', 'important');
+		      } else {
+		        topbar.style.setProperty('max-height', '60px', 'important');
+		        topbar.style.removeProperty('padding-top');
+		        topbar.style.removeProperty('padding-bottom');
+		        topbar.style.setProperty('pointer-events', 'auto', 'important');
+		      }
+		      topbar.style.setProperty('overflow', 'hidden', 'important');
+		    }
+		    // Hauptnav: Kubios eigenes Sticky-Skript übernimmt bereits top/position/Shrink-Klasse
+		    // selbstständig (siehe Inline-Styles, die es selbst schreibt) — wir mischen uns hier
+		    // nicht mehr ein, um Konflikte zu vermeiden.
 		  }
 		  window.addEventListener('scroll', onScroll, {passive:true});
 		  // Pfeil-Klick scrollt zum Content
