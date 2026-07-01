@@ -589,8 +589,9 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		  var logoBg  = document.getElementById('pe-logo-bg');
 		  var arrow   = document.getElementById('pe-scroll-arrow');
 		  var cover   = document.getElementById('pe-bottom-cover');
-		  var header  = document.querySelector('.wp-block-kubio-header');
-		  var topbar  = document.querySelector('[class*="navigation-top-bar"]');
+		  var header     = document.querySelector('.wp-block-kubio-header');
+		  var topbar     = document.querySelector('[class*="navigation-top-bar"]');
+		  var navSection = document.querySelector('.wp-block-kubio-navigation-section, [class*="navigation-section"]');
 		  function onScroll(){
 		    var heroBottom = header ? header.getBoundingClientRect().bottom : 0;
 		    var pastHero = heroBottom <= 0;
@@ -617,6 +618,10 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		        topbar.style.setProperty('pointer-events', 'auto', 'important');
 		      }
 		      topbar.style.setProperty('overflow', 'hidden', 'important');
+		    }
+		    // Nav nach oben schieben sobald Topbar kollabiert — Lücke schließen
+		    if(navSection) {
+		      navSection.style.setProperty('top', scrolled ? '0px' : '41px', 'important');
 		    }
 		    // Hauptnav: Kubios eigenes Sticky-Skript übernimmt bereits top/position/Shrink-Klasse
 		    // selbstständig (siehe Inline-Styles, die es selbst schreibt) — wir mischen uns hier
