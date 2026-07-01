@@ -181,8 +181,11 @@ var ForminatorFront = {"ajaxUrl":"https://ingenieur-petkovic.de/wp-admin/admin-a
     transition: max-height 0.35s ease, padding 0.35s ease;
   }
   .wp-block-kubio-navigation-section {
-    top: 41px !important; /* direkt unter der Topbar — Startwert, wird per JS aktualisiert */
+    top: 41px !important;
     transition: top 0.35s ease, box-shadow 0.35s ease;
+  }
+  body.pe-scrolled .wp-block-kubio-navigation-section {
+    top: 0px !important;
   }
   /* Sanfte Übergänge für Kubios eigene Sticky-Klasse (h-navigation_sticky),
      die Padding/Hintergrund übernimmt — siehe onScroll-JS */
@@ -619,10 +622,9 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 		      }
 		      topbar.style.setProperty('overflow', 'hidden', 'important');
 		    }
-		    // Nav nach oben schieben sobald Topbar kollabiert — Lücke schließen
-		    if(navSection) {
-		      navSection.style.setProperty('top', scrolled ? '0px' : '41px', 'important');
-		    }
+		    // Nav nach oben schieben sobald Topbar kollabiert — per CSS-Klasse (nicht inline),
+		    // weil Kubios rAF-Loop inline top= ohne !important setzt und unsere JS-!important Priority löscht.
+		    document.body.classList.toggle('pe-scrolled', scrolled);
 		    // Hauptnav: Kubios eigenes Sticky-Skript übernimmt bereits top/position/Shrink-Klasse
 		    // selbstständig (siehe Inline-Styles, die es selbst schreibt) — wir mischen uns hier
 		    // nicht mehr ein, um Konflikte zu vermeiden.
